@@ -1,0 +1,174 @@
+
+<html>
+	<head>
+		<title>Travelling Salesman 2-Approximation</title>
+	</head>
+	<script src="jquery.js"></script>
+	<script src="utilities.js"></script>
+	<script src="graph.js"></script>
+	<script src="mst.js"></script>
+	<script src="tour.js"></script>
+	<link href="boot.css" rel="stylesheet">
+	<script>
+		var counter = 0;
+		var nodeNumber = 0;
+
+		var countUp = function () {
+			counter++;
+		};
+
+		var showCount = function (message) {
+			$("#results").append(message + ' <steps : ' +counter+'><br/>');
+		};
+
+		var removedNodes = [];
+
+		var graph 		= null,
+			mst 		= null,
+			tour 		= null,
+			ctx			= null,
+			waitForMST 	= null,
+			cancel 		= false;
+
+		$(document).ready(function() {
+			ctx = $("#canvas")[0].getContext("2d");
+			disableButtons();
+
+			$("#new-button").attr("disabled", false);
+
+			//Create new graph then run MST and Tour
+			$("#new-button").click(function(){
+				nodeNumber = 0;
+				counter = 0;
+				$("#results").empty();
+
+				var numNodes = parseInt($("#nodes-input").val());
+
+				if(isNaN(numNodes) || numNodes <= 1) {
+					alert("You need atleast 2 nodes to run the algorithm.");
+					return;
+				}
+
+				graph = new Graph(ctx, numNodes);
+
+				doAlgorithm();
+			});
+
+//			Run the algorithm using the same graph
+			$("#again-button").click(function(){
+				nodeNumber = 0;
+				graph.again();
+//				doAlgorithm();
+				$('#results').empty();
+			});
+
+			function doAlgorithm() {
+				var time = parseInt($("#time-input").val());
+
+				if(isNaN(time) || time < 1) {
+					alert("You need to set the time to be over 0ms to run the algorithm.");
+					return;
+				}
+
+				mst  	= null;
+				tour 	= null;
+				cancel 	= false;
+
+				disableButtons();
+				$("#cancel-button").attr("disabled", false);
+
+				mst 		= new MST(graph, time);
+				waitForMST 	= setInterval(function(){
+					if(mst && mst.done && !cancel) {
+						clearInterval(waitForMST);
+						tour = new Tour(graph, time);
+					}
+				}, 1000);
+			}
+
+			setInterval(function() {
+				if(tour && tour.done) {
+					enableButtons();
+				}
+			}, 100);
+
+			function disableButtons() {
+				$("#new-button").attr("disabled", true);
+				$("#both-button").attr("disabled", true);
+				$("#mst-button").attr("disabled", true);
+				$("#tour-button").attr("disabled", true);
+				$("#again-button").attr("disabled", true);
+				$("#cancel-button").attr("disabled", true);
+				$("#full-button").attr("disabled", true);
+			}
+
+			function enableButtons() {
+				$("#new-button").attr("disabled", false);
+				$("#both-button").attr("disabled", false);
+				$("#mst-button").attr("disabled", false);
+				$("#tour-button").attr("disabled", false);
+				$("#again-button").attr("disabled", false);
+				$("#cancel-button").attr("disabled", false);
+				$("#full-button").attr("disabled", false);
+			}
+		});
+		
+		console.log("No syntax errors!");
+
+		$(document).ready(function () {
+			$('#canvas').attr('width', $( window ).width() - ($( window ).width() * 0.20) - 30);
+			$('#canvas').attr('height', $( window ).height() - 120);
+			$('#canvas').css('marginTop', 100)
+		});
+	</script>
+	<style>
+		.wellll {
+			padding: 20px;
+			position: absolute;
+			z-index: 4;
+		}
+		#results {
+			right: 0;
+			width: 20%;
+			height: 100%;
+			position:fixed;
+			z-index: 2;
+			overflow: scroll;
+
+		}
+		canvas {
+			position: fixed;
+			background-color: #FFF;
+			margin:10px;
+			padding: 10px;
+			z-index: 0;
+		}
+		span {
+			padding-left: 20px;
+		}
+		input {
+			width: 100px;
+		}
+	</style>
+	<body style="padding: 0px; margin: 0px;">
+		<canvas id="canvas">
+			<h1>You need a browser that supports the HTML5 canvas element to view this.</h1>
+		</canvas>
+		<div class="wellll">
+			<strong>
+			Amount of nodes:
+			<input id="nodes-input" type="text" value="50">(recommend < 10000)
+			</strong>
+			<span>
+			(	Move every
+				<input id="time-input" type="text" value="50"> milliseconds
+			)
+			</span>
+			<button  class="btn btn-success" id="new-button">Process</button>
+			<button id="again-button" class="btn  btn-link text-danger" disabled>Clear</button>
+		</div>
+		<div id="results">
+
+		</div>
+	</body>
+</html>
